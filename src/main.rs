@@ -1,3 +1,8 @@
+mod app;
+
+use app::App;
+
 fn main() {
-    println!("Hello, world!");
+    let app = App::new();
+    println!("Score: {}", app.score);
 }
