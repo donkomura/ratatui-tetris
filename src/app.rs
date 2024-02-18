@@ -59,26 +59,28 @@ impl Shape {
 
 pub struct Mino {
     pub is_falling: bool,
-    pub shape: Shape,       // shape of the tetromino
-    pub position: [i32; 2], // position of the tetromino
+    pub block: Shape, // shape of the tetromino
 }
 
 impl Mino {
     pub fn new() -> Self {
         Mino {
             is_falling: false,
-            shape: Shape::new(),
-            position: [0, 0],
+            block: Shape::new(),
         }
     }
-        }
-    }
+}
+
+pub struct Point {
+    pub y: i32,
+    pub x: i32,
 }
 
 pub struct App {
     pub score: u64,
     pub should_quit: bool,
     pub mino: Mino,
+    pub position: Point,        // left corner of the tetromino
     pub board: [[i32; 10]; 20], // 20x10 board
 }
 
@@ -89,17 +91,53 @@ impl App {
             should_quit: false,
             mino: Mino::new(),
             board: [[0; 10]; 20],
+            position: Point { y: 0, x: 0 },
         }
+    }
+    fn is_out_of_range(&self, py: i32, px: i32) -> bool {
+        if py < 0 || py >= 20 || px < 0 || px >= 10 {
+            return true;
+        }
+        return false;
+    }
+    fn is_conflict(&self, mino: &Mino) -> bool {
+        let shape = &mino.block.shape;
+        let position = &self.position;
+        for i in 0..shape.len() {
+            let [y, x] = shape[i];
+            let cy = y + position.y;
+            let cx = x + position.x;
+            if self.is_out_of_range(cy, cx) {
+                return true;
+            }
+            if self.board[cy as usize][cx as usize] == 1 {
+                return true;
+            }
+        }
+        return false;
+    }
+    pub fn fall(&mut self) -> bool {
+        if !self.mino.is_falling {
+            return false;
+        }
+        if self.is_conflict(&self.mino) {
+            return false;
+        }
+        // ミノを1つ下に落とす
+        return true;
     }
     // create new block at the top of the board
     pub fn spawn(&mut self) -> bool {
         let mino = Mino::new();
-        let shape = mino.shape.shape;
+        if self.is_conflict(&mino) {
+            return false;
+        }
+        self.mino = mino;
+        let shape = self.mino.block.shape;
         for i in 0..shape.len() {
             let [y, x] = shape[i];
             self.board[y as usize][x as usize] = 1;
         }
-        self.mino = mino;
         return true;
     }
 }
