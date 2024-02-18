@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::{App, Mino};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -7,6 +7,8 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
+
+const CELL: char = '□';
 
 fn render_header(f: &mut Frame, app: &App, chunk: Rect) {
     let header_area = Layout::default()
@@ -36,6 +38,28 @@ fn render_header(f: &mut Frame, app: &App, chunk: Rect) {
     f.render_widget(score_block, header_area[1]);
 }
 
+fn render_body(f: &mut Frame, app: &App, chunk: Rect) {
+    let body_area = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Length(10)])
+        .split(chunk);
+    let mut lines: Vec<Line> = Vec::new();
+    for (_, row) in app.mino.board.iter().enumerate() {
+        let mut rs = String::new();
+        for (_, cell) in row.iter().enumerate() {
+            if *cell == 0 {
+                rs.push(' ');
+            } else {
+                rs.push(CELL);
+            }
+        }
+        lines.push(Line::from(rs));
+    }
+    let text = Text::from(lines);
+    let block = Paragraph::new(text).block(Block::bordered());
+    f.render_widget(block, body_area[0]);
+}
+
 pub fn ui(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -43,4 +67,5 @@ pub fn ui(f: &mut Frame, app: &App) {
         .split(f.size());
 
     render_header(f, app, chunks[0]);
+    render_body(f, app, chunks[1]);
 }
