@@ -11,7 +11,7 @@ pub enum TETROMINOS {
 
 pub struct Shape {
     pub kind: TETROMINOS,
-    pub shape: [[i32; 2]; 4],
+    pub shape: [[i32; 2]; 4], // [y, x]
 }
 
 impl Shape {
@@ -58,23 +58,22 @@ impl Shape {
 }
 
 pub struct Mino {
-    pub shape: Shape, // shape of the tetromino
-    pub cy: i32,      // conter y of the tetromino
-    pub cx: i32,      // center x of the tetromino
+    pub shape: Shape,           // shape of the tetromino
+    pub board: [[i32; 10]; 20], // 20x10 board
 }
 
 impl Mino {
     pub fn new() -> Self {
         Mino {
             shape: Shape::new(),
-            cy: 0,
-            cx: 0,
+            board: [[0; 10]; 20],
         }
     }
 }
 
 pub struct App {
     pub score: u64,
+    pub should_quit: bool,
     pub mino: Mino,
 }
 
@@ -82,6 +81,7 @@ impl App {
     pub fn new() -> App {
         App {
             score: 0,
+            should_quit: false,
             mino: Mino::new(),
         }
     }
