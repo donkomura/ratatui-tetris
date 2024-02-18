@@ -1,4 +1,4 @@
-use crate::app::{App, Mino};
+use crate::app::App;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -44,7 +44,7 @@ fn render_body(f: &mut Frame, app: &App, chunk: Rect) {
         .constraints([Constraint::Length(10)])
         .split(chunk);
     let mut lines: Vec<Line> = Vec::new();
-    for (_, row) in app.mino.board.iter().enumerate() {
+    for (_, row) in app.board.iter().enumerate() {
         let mut rs = String::new();
         for (_, cell) in row.iter().enumerate() {
             if *cell == 0 {

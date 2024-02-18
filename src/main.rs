@@ -58,6 +58,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<bool> {
     loop {
+        if !app.mino.is_falling {
+            app.mino.is_falling = true;
+            if !app.spawn() {
+                app.should_quit = true;
+            }
+        }
+
         terminal.draw(|f| ui::ui(f, app))?;
 
         if let Event::Key(key) = event::read()? {

@@ -58,15 +58,19 @@ impl Shape {
 }
 
 pub struct Mino {
-    pub shape: Shape,           // shape of the tetromino
-    pub board: [[i32; 10]; 20], // 20x10 board
+    pub is_falling: bool,
+    pub shape: Shape,       // shape of the tetromino
+    pub position: [i32; 2], // position of the tetromino
 }
 
 impl Mino {
     pub fn new() -> Self {
         Mino {
+            is_falling: false,
             shape: Shape::new(),
-            board: [[0; 10]; 20],
+            position: [0, 0],
+        }
+    }
         }
     }
 }
@@ -75,6 +79,7 @@ pub struct App {
     pub score: u64,
     pub should_quit: bool,
     pub mino: Mino,
+    pub board: [[i32; 10]; 20], // 20x10 board
 }
 
 impl App {
@@ -83,6 +88,18 @@ impl App {
             score: 0,
             should_quit: false,
             mino: Mino::new(),
+            board: [[0; 10]; 20],
         }
+    }
+    // create new block at the top of the board
+    pub fn spawn(&mut self) -> bool {
+        let mino = Mino::new();
+        let shape = mino.shape.shape;
+        for i in 0..shape.len() {
+            let [y, x] = shape[i];
+            self.board[y as usize][x as usize] = 1;
+        }
+        self.mino = mino;
+        return true;
     }
 }
