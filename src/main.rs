@@ -58,15 +58,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<bool> {
     loop {
-        terminal.draw(|f| ui::ui(f, app))?;
-
-        // 新しいミノの生成
+        if !app.fall() {
+            app.mino.is_falling = false;
+        }
+        // 新規作成
         if !app.mino.is_falling {
-            app.mino.is_falling = true;
             if !app.spawn() {
                 app.should_quit = true;
             }
+            app.mino.is_falling = true;
         }
+
+        terminal.draw(|f| ui::ui(f, app))?;
 
         // TODO: move to the other thread
         if let Event::Key(key) = event::read()? {

@@ -94,6 +94,9 @@ impl App {
             position: Point { y: 0, x: 0 },
         }
     }
+    pub fn reset_position(&mut self) {
+        self.position = Point { y: 0, x: 0 };
+    }
     fn is_out_of_range(&self, py: i32, px: i32) -> bool {
         if py < 0 || py >= 20 || px < 0 || px >= 10 {
             return true;
@@ -116,19 +119,46 @@ impl App {
         }
         return false;
     }
+    fn move_mino(&mut self, diff: Point) -> bool {
+        let np = Point {
+            y: self.position.y + diff.y,
+            x: self.position.x + diff.x,
+        };
+        for i in 0..self.mino.block.shape.len() {
+            let [y, x] = self.mino.block.shape[i];
+            let ny = y + np.y;
+            let nx = x + np.x;
+            if self.is_out_of_range(ny, nx) {
+                return false;
+            }
+        }
+        // 削除
+        for i in 0..self.mino.block.shape.len() {
+            let [y, x] = self.mino.block.shape[i];
+            let ny = y + self.position.y;
+            let nx = x + self.position.x;
+            self.board[ny as usize][nx as usize] = 0;
+        }
+        self.position = np;
+        // 移動
+        for i in 0..self.mino.block.shape.len() {
+            let [y, x] = self.mino.block.shape[i];
+            let ny = y + self.position.y;
+            let nx = x + self.position.x;
+            self.board[ny as usize][nx as usize] = 1;
+        }
+        return true;
+    }
     pub fn fall(&mut self) -> bool {
         if !self.mino.is_falling {
             return false;
         }
-        if self.is_conflict(&self.mino) {
-            return false;
-        }
-        // ミノを1つ下に落とす
-        return true;
+        return self.move_mino(Point { y: 1, x: 0 });
     }
     // create new block at the top of the board
     pub fn spawn(&mut self) -> bool {
         let mino = Mino::new();
+        self.reset_position();
         if self.is_conflict(&mino) {
             return false;
         }
