@@ -1,5 +1,6 @@
 use rand::Rng;
 
+#[derive(Clone)]
 pub enum TETROMINOS {
     // all mino consists of 4 blocks
     STRAIGHT,
@@ -9,6 +10,7 @@ pub enum TETROMINOS {
     S,
 }
 
+#[derive(Clone)]
 pub struct Shape {
     pub kind: TETROMINOS,
     pub shape: [[i32; 2]; 4], // [y, x]
@@ -57,6 +59,7 @@ impl Shape {
     }
 }
 
+#[derive(Clone)]
 pub struct Mino {
     pub is_falling: bool,
     pub block: Shape, // shape of the tetromino
@@ -71,6 +74,7 @@ impl Mino {
     }
 }
 
+#[derive(Clone)]
 pub struct Point {
     pub y: i32,
     pub x: i32,
@@ -103,9 +107,8 @@ impl App {
         }
         return false;
     }
-    fn is_conflict(&self, mino: &Mino) -> bool {
+    fn is_conflict(&self, position: &Point, mino: &Mino) -> bool {
         let shape = &mino.block.shape;
-        let position = &self.position;
         for i in 0..shape.len() {
             let [y, x] = shape[i];
             let cy = y + position.y;
@@ -119,55 +122,48 @@ impl App {
         }
         return false;
     }
-    fn move_mino(&mut self, diff: Point) -> bool {
+    fn render(&mut self, mino: &Mino, base: &Point, value: i32) {
+        for i in 0..mino.block.shape.len() {
+            let [y, x] = mino.block.shape[i];
+            let ny = y + base.y;
+            let nx = x + base.x;
+            self.board[ny as usize][nx as usize] = value;
+        }
+    }
+    fn move_mino(&mut self, diff: &Point) -> bool {
         let np = Point {
             y: self.position.y + diff.y,
             x: self.position.x + diff.x,
         };
-        for i in 0..self.mino.block.shape.len() {
-            let [y, x] = self.mino.block.shape[i];
-            let ny = y + np.y;
-            let nx = x + np.x;
-            if self.is_out_of_range(ny, nx) {
-                return false;
-            }
+        // 移動前の描画を消す
+        let mino = self.mino.clone();
+        let base = self.position.clone();
+        self.render(&mino, &base, 0);
+        // 移動先で衝突検査
+        if self.is_conflict(&np, &mino) {
+            self.render(&mino, &base, 1);
+            return false;
         }
-        // 削除
-        for i in 0..self.mino.block.shape.len() {
-            let [y, x] = self.mino.block.shape[i];
-            let ny = y + self.position.y;
-            let nx = x + self.position.x;
-            self.board[ny as usize][nx as usize] = 0;
-        }
-        self.position = np;
         // 移動
-        for i in 0..self.mino.block.shape.len() {
-            let [y, x] = self.mino.block.shape[i];
-            let ny = y + self.position.y;
-            let nx = x + self.position.x;
-            self.board[ny as usize][nx as usize] = 1;
-        }
+        self.render(&mino, &np, 1);
+        self.position = np;
         return true;
     }
     pub fn fall(&mut self) -> bool {
         if !self.mino.is_falling {
             return false;
         }
-        return self.move_mino(Point { y: 1, x: 0 });
+        return self.move_mino(&Point { y: 1, x: 0 });
     }
     // create new block at the top of the board
     pub fn spawn(&mut self) -> bool {
         let mino = Mino::new();
         self.reset_position();
-        if self.is_conflict(&mino) {
+        if self.is_conflict(&self.position, &mino) {
             return false;
         }
+        self.render(&mino, &self.position.clone(), 1);
         self.mino = mino;
-        let shape = self.mino.block.shape;
-        for i in 0..shape.len() {
-            let [y, x] = shape[i];
-            self.board[y as usize][x as usize] = 1;
-        }
         return true;
     }
 }

@@ -58,11 +58,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<bool> {
     loop {
+        // 落下
         if !app.fall() {
             app.mino.is_falling = false;
         }
-        // 新規作成
         if !app.mino.is_falling {
+            // 新規作成
             if !app.spawn() {
                 app.should_quit = true;
             }
