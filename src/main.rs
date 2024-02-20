@@ -1,13 +1,14 @@
 mod app;
+mod event;
 mod ui;
 
 use app::App;
-
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
+    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use event::EventHandler;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     terminal::Terminal,
@@ -41,7 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // create and run app
     let mut app = App::new();
-    let res = run_app(&mut app, &mut terminal);
+    let res = run_app(&mut app, &mut terminal, 250);
     reset(Box::new(io::stdout()))?; // Use the new instance of stdout
     terminal.show_cursor()?;
 
@@ -56,8 +57,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<bool> {
-    loop {
+fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> io::Result<bool> {
+    let events = EventHandler::new(tick);
+    while !app.should_quit {
         // 落下
         if !app.fall() {
             app.mino.is_falling = false;
@@ -72,21 +74,15 @@ fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<
 
         terminal.draw(|f| ui::ui(f, app))?;
 
-        // TODO: move to the other thread
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
-                continue;
-            }
-            match key.code {
-                event::KeyCode::Esc | event::KeyCode::Char('q') => {
-                    app.should_quit = true;
-                }
-                _ => {}
-            }
-        }
-
-        if app.should_quit {
-            return Ok(true);
-        }
+        match events.next() {
+            Ok(event) => match event {
+                event::Event::Tick => {}
+                event::Event::Key(_) => {}
+                event::Event::Mouse(_) => {}
+                event::Event::Resize(_, _) => {}
+            },
+            Err(_) => {}
+        };
     }
+    Ok(true)
 }
