@@ -137,6 +137,12 @@ impl App {
     pub fn height(&self) -> u16 {
         return self.height;
     }
+    pub fn move_right(&mut self) {
+        self.move_mino(&Point { y: 0, x: 1 });
+    }
+    pub fn move_left(&mut self) {
+        self.move_mino(&Point { y: 0, x: -1 });
+    }
     pub fn move_mino(&mut self, diff: &Point) -> bool {
         let np = Point {
             y: self.position.y + diff.y,

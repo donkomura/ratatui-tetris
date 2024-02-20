@@ -4,7 +4,7 @@ mod ui;
 
 use app::App;
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{DisableMouseCapture, EnableMouseCapture, KeyCode, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -60,6 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> io::Result<bool> {
     let events = EventHandler::new(tick);
     while !app.should_quit {
+        terminal.draw(|f| ui::ui(f, app))?;
         // 落下
         if !app.fall() {
             app.mino.is_falling = false;
@@ -72,12 +73,26 @@ fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> 
             app.mino.is_falling = true;
         }
 
-        terminal.draw(|f| ui::ui(f, app))?;
-
         match events.next() {
             Ok(event) => match event {
                 event::Event::Tick => {}
-                event::Event::Key(_) => {}
+                event::Event::Key(key_event) => match key_event.code {
+                    KeyCode::Char('q') | KeyCode::Esc => {
+                        app.should_quit = true;
+                    }
+                    KeyCode::Char('c') | KeyCode::Char('C') => {
+                        if key_event.modifiers == KeyModifiers::CONTROL {
+                            app.should_quit = true;
+                        }
+                    }
+                    KeyCode::Right => {
+                        app.move_right();
+                    }
+                    KeyCode::Left => {
+                        app.move_left();
+                    }
+                    _ => {}
+                },
                 event::Event::Mouse(_) => {}
                 event::Event::Resize(_, _) => {}
             },
