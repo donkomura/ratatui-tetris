@@ -2,6 +2,7 @@ mod app;
 mod event;
 mod ui;
 
+use anyhow::Result;
 use app::App;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture, KeyCode, KeyModifiers},
@@ -14,18 +15,17 @@ use ratatui::{
     terminal::Terminal,
 };
 use std::{
-    error::Error,
     io::{self, Write},
     panic,
 };
 
-fn reset(mut stream: Box<dyn Write>) -> io::Result<()> {
+fn reset(mut stream: Box<dyn Write>) -> Result<()> {
     disable_raw_mode()?;
     execute!(stream, LeaveAlternateScreen, DisableMouseCapture)?;
     Ok(())
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     enable_raw_mode()?;
 
     let mut stdout = io::stdout();
@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> io::Result<bool> {
+fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> Result<bool> {
     let events = EventHandler::new(tick);
     while !app.should_quit {
         terminal.draw(|f| ui::ui(f, app))?;
@@ -73,30 +73,27 @@ fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> 
             app.mino.is_falling = true;
         }
 
-        match events.next() {
-            Ok(event) => match event {
-                event::Event::Tick => {}
-                event::Event::Key(key_event) => match key_event.code {
-                    KeyCode::Char('q') | KeyCode::Esc => {
+        match events.next()? {
+            event::Event::Tick => {}
+            event::Event::Key(key_event) => match key_event.code {
+                KeyCode::Char('q') | KeyCode::Esc => {
+                    app.should_quit = true;
+                }
+                KeyCode::Char('c') | KeyCode::Char('C') => {
+                    if key_event.modifiers == KeyModifiers::CONTROL {
                         app.should_quit = true;
                     }
-                    KeyCode::Char('c') | KeyCode::Char('C') => {
-                        if key_event.modifiers == KeyModifiers::CONTROL {
-                            app.should_quit = true;
-                        }
-                    }
-                    KeyCode::Right => {
-                        app.move_right();
-                    }
-                    KeyCode::Left => {
-                        app.move_left();
-                    }
-                    _ => {}
-                },
-                event::Event::Mouse(_) => {}
-                event::Event::Resize(_, _) => {}
+                }
+                KeyCode::Right => {
+                    app.move_right();
+                }
+                KeyCode::Left => {
+                    app.move_left();
+                }
+                _ => {}
             },
-            Err(_) => {}
+            event::Event::Mouse(_) => {}
+            event::Event::Resize(_, _) => {}
         };
     }
     Ok(true)
