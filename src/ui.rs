@@ -41,7 +41,7 @@ fn render_header(f: &mut Frame, app: &App, chunk: Rect) {
 fn render_body(f: &mut Frame, app: &App, chunk: Rect) {
     let body_area = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(10)])
+        .constraints([Constraint::Length(app.width() + 2)])
         .split(chunk);
     let mut lines: Vec<Line> = Vec::new();
     for (_, row) in app.board.iter().enumerate() {
@@ -63,7 +63,7 @@ fn render_body(f: &mut Frame, app: &App, chunk: Rect) {
 pub fn ui(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(3), Constraint::Length(22)])
+        .constraints([Constraint::Length(3), Constraint::Length(app.height() + 2)])
         .split(f.size());
 
     render_header(f, app, chunks[0]);

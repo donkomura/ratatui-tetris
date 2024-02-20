@@ -81,6 +81,8 @@ pub struct Point {
 }
 
 pub struct App {
+    width: u16,
+    height: u16,
     pub score: u64,
     pub should_quit: bool,
     pub mino: Mino,
@@ -91,11 +93,13 @@ pub struct App {
 impl App {
     pub fn new() -> App {
         App {
+            width: 10,
+            height: 20,
             score: 0,
             should_quit: false,
             mino: Mino::new(),
-            board: [[0; 10]; 20],
             position: Point { y: 0, x: 0 },
+            board: [[0; 10]; 20],
         }
     }
     fn is_out_of_range(&self, py: i32, px: i32) -> bool {
@@ -127,7 +131,13 @@ impl App {
             self.board[ny as usize][nx as usize] = value;
         }
     }
-    fn move_mino(&mut self, diff: &Point) -> bool {
+    pub fn width(&self) -> u16 {
+        return self.width;
+    }
+    pub fn height(&self) -> u16 {
+        return self.height;
+    }
+    pub fn move_mino(&mut self, diff: &Point) -> bool {
         let np = Point {
             y: self.position.y + diff.y,
             x: self.position.x + diff.x,
