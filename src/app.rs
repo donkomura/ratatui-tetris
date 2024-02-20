@@ -98,9 +98,6 @@ impl App {
             position: Point { y: 0, x: 0 },
         }
     }
-    pub fn reset_position(&mut self) {
-        self.position = Point { y: 0, x: 0 };
-    }
     fn is_out_of_range(&self, py: i32, px: i32) -> bool {
         if py < 0 || py >= 20 || px < 0 || px >= 10 {
             return true;
@@ -148,6 +145,9 @@ impl App {
         self.render(&mino, &np, 1);
         self.position = np;
         return true;
+    }
+    pub fn reset_position(&mut self) {
+        self.position = Point { y: 0, x: 0 };
     }
     pub fn fall(&mut self) -> bool {
         if !self.mino.is_falling {
