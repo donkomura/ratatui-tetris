@@ -90,16 +90,19 @@ pub struct App {
     pub board: [[i32; 10]; 20], // 20x10 board
 }
 
+const BOARD_WIDTH: u16 = 10;
+const BOARD_HEIGHT: u16 = 20;
+
 impl App {
     pub fn new() -> App {
         App {
-            width: 10,
-            height: 20,
+            width: BOARD_WIDTH,
+            height: BOARD_HEIGHT,
             score: 0,
             should_quit: false,
             mino: Mino::new(),
             position: Point { y: 0, x: 0 },
-            board: [[0; 10]; 20],
+            board: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
         }
     }
     fn is_out_of_range(&self, py: i32, px: i32) -> bool {
