@@ -81,6 +81,8 @@ pub struct Point {
 }
 
 pub struct App {
+    width: u16,
+    height: u16,
     pub score: u64,
     pub should_quit: bool,
     pub mino: Mino,
@@ -88,18 +90,20 @@ pub struct App {
     pub board: [[i32; 10]; 20], // 20x10 board
 }
 
+const BOARD_WIDTH: u16 = 10;
+const BOARD_HEIGHT: u16 = 20;
+
 impl App {
     pub fn new() -> App {
         App {
+            width: BOARD_WIDTH,
+            height: BOARD_HEIGHT,
             score: 0,
             should_quit: false,
             mino: Mino::new(),
-            board: [[0; 10]; 20],
             position: Point { y: 0, x: 0 },
+            board: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
         }
-    }
-    pub fn reset_position(&mut self) {
-        self.position = Point { y: 0, x: 0 };
     }
     fn is_out_of_range(&self, py: i32, px: i32) -> bool {
         if py < 0 || py >= 20 || px < 0 || px >= 10 {
@@ -130,6 +134,18 @@ impl App {
             self.board[ny as usize][nx as usize] = value;
         }
     }
+    pub fn width(&self) -> u16 {
+        return self.width;
+    }
+    pub fn height(&self) -> u16 {
+        return self.height;
+    }
+    pub fn move_right(&mut self) {
+        self.move_mino(&Point { y: 0, x: 1 });
+    }
+    pub fn move_left(&mut self) {
+        self.move_mino(&Point { y: 0, x: -1 });
+    }
     fn move_mino(&mut self, diff: &Point) -> bool {
         let np = Point {
             y: self.position.y + diff.y,
@@ -148,6 +164,9 @@ impl App {
         self.render(&mino, &np, 1);
         self.position = np;
         return true;
+    }
+    pub fn reset_position(&mut self) {
+        self.position = Point { y: 0, x: 0 };
     }
     pub fn fall(&mut self) -> bool {
         if !self.mino.is_falling {
