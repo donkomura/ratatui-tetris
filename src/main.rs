@@ -21,7 +21,7 @@ use std::{
 
 fn reset(mut stream: Box<dyn Write>) -> Result<()> {
     disable_raw_mode()?;
-    execute!(stream, LeaveAlternateScreen, DisableMouseCapture)?;
+    execute!(stream, LeaveAlternateScreen)?;
     Ok(())
 }
 
@@ -29,7 +29,7 @@ fn main() -> Result<()> {
     enable_raw_mode()?;
 
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
