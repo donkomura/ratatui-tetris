@@ -90,6 +90,9 @@ fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> 
                 KeyCode::Left => {
                     app.move_left();
                 }
+                KeyCode::Down => {
+                    app.move_down();
+                }
                 _ => {}
             },
             event::Event::Mouse(_) => {}
