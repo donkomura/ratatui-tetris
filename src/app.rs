@@ -1,6 +1,6 @@
 use rand::Rng;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum TETROMINOS {
     // all mino consists of 4 blocks
     STRAIGHT,
@@ -13,38 +13,38 @@ pub enum TETROMINOS {
 #[derive(Clone)]
 pub struct Shape {
     pub kind: TETROMINOS,
-    pub shape: [[i32; 2]; 4], // [y, x]
+    pub points: [[i32; 2]; 4], // [y, x]
 }
 
 impl Shape {
     fn straight() -> Self {
         Shape {
             kind: TETROMINOS::STRAIGHT,
-            shape: [[0, 0], [0, 1], [0, 2], [0, 3]],
+            points: [[0, 0], [0, 1], [0, 2], [0, 3]],
         }
     }
     fn square() -> Self {
         Shape {
             kind: TETROMINOS::SQUARE,
-            shape: [[0, 0], [0, 1], [1, 0], [1, 1]],
+            points: [[0, 0], [0, 1], [1, 0], [1, 1]],
         }
     }
     fn t() -> Self {
         Shape {
             kind: TETROMINOS::T,
-            shape: [[0, 0], [0, 1], [0, 2], [1, 1]],
+            points: [[0, 0], [0, 1], [0, 2], [1, 1]],
         }
     }
     fn l() -> Self {
         Shape {
             kind: TETROMINOS::L,
-            shape: [[0, 0], [0, 1], [0, 2], [1, 2]],
+            points: [[0, 0], [0, 1], [0, 2], [1, 2]],
         }
     }
     fn s() -> Self {
         Shape {
             kind: TETROMINOS::S,
-            shape: [[0, 0], [0, 1], [1, 1], [1, 2]],
+            points: [[0, 0], [0, 1], [1, 1], [1, 2]],
         }
     }
     pub fn new() -> Self {
@@ -55,6 +55,15 @@ impl Shape {
             2 => Shape::t(),
             3 => Shape::l(),
             _ => Shape::s(),
+        }
+    }
+    pub fn create(kind: TETROMINOS) -> Self {
+        match kind {
+            TETROMINOS::STRAIGHT => Shape::straight(),
+            TETROMINOS::SQUARE => Shape::square(),
+            TETROMINOS::T => Shape::t(),
+            TETROMINOS::L => Shape::l(),
+            TETROMINOS::S => Shape::s(),
         }
     }
 }
@@ -71,6 +80,36 @@ impl Mino {
             is_falling: false,
             block: Shape::new(),
         }
+    }
+    pub fn create(kind: TETROMINOS) -> Self {
+        Mino {
+            is_falling: false,
+            block: Shape::create(kind),
+        }
+    }
+    pub fn rotate_left(&mut self) {
+        let block = self.block.clone();
+        if block.kind == TETROMINOS::SQUARE {
+            return;
+        }
+        let mut new_points = [[0; 2]; 4];
+        for i in 0..block.points.len() {
+            let [y, x] = block.points[i];
+            new_points[i] = [-x, y];
+        }
+        self.block.points = new_points;
+    }
+    pub fn rotate_right(&mut self) {
+        let block = self.block.clone();
+        if block.kind == TETROMINOS::SQUARE {
+            return;
+        }
+        let mut new_points = [[0; 2]; 4];
+        for i in 0..block.points.len() {
+            let [y, x] = block.points[i];
+            new_points[i] = [x, -y];
+        }
+        self.block.points = new_points;
     }
 }
 
@@ -112,9 +151,9 @@ impl App {
         return false;
     }
     fn is_conflict(&self, position: &Point, mino: &Mino) -> bool {
-        let shape = &mino.block.shape;
-        for i in 0..shape.len() {
-            let [y, x] = shape[i];
+        let points = &mino.block.points;
+        for i in 0..points.len() {
+            let [y, x] = points[i];
             let cy = y + position.y;
             let cx = x + position.x;
             if self.is_out_of_range(cy, cx) {
@@ -127,27 +166,12 @@ impl App {
         return false;
     }
     fn render(&mut self, mino: &Mino, base: &Point, value: i32) {
-        for i in 0..mino.block.shape.len() {
-            let [y, x] = mino.block.shape[i];
+        for i in 0..mino.block.points.len() {
+            let [y, x] = mino.block.points[i];
             let ny = y + base.y;
             let nx = x + base.x;
             self.board[ny as usize][nx as usize] = value;
         }
-    }
-    pub fn width(&self) -> u16 {
-        return self.width;
-    }
-    pub fn height(&self) -> u16 {
-        return self.height;
-    }
-    pub fn move_right(&mut self) {
-        self.move_mino(&Point { y: 0, x: 1 });
-    }
-    pub fn move_left(&mut self) {
-        self.move_mino(&Point { y: 0, x: -1 });
-    }
-    pub fn move_down(&mut self) {
-        self.move_mino(&Point { y: 1, x: 0 });
     }
     fn move_mino(&mut self, diff: &Point) -> bool {
         let np = Point {
