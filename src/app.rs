@@ -146,6 +146,9 @@ impl App {
     pub fn move_left(&mut self) {
         self.move_mino(&Point { y: 0, x: -1 });
     }
+    pub fn move_down(&mut self) {
+        self.move_mino(&Point { y: 1, x: 0 });
+    }
     fn move_mino(&mut self, diff: &Point) -> bool {
         let np = Point {
             y: self.position.y + diff.y,
