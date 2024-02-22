@@ -5,7 +5,7 @@ mod ui;
 use anyhow::Result;
 use app::App;
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture, KeyCode, KeyModifiers},
+    event::{KeyCode, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -42,7 +42,7 @@ fn main() -> Result<()> {
 
     // create and run app
     let mut app = App::new();
-    let res = run_app(&mut app, &mut terminal, 250);
+    let res = run_app(&mut app, &mut terminal, 500);
     reset(Box::new(io::stdout()))?; // Use the new instance of stdout
     terminal.show_cursor()?;
 
@@ -92,6 +92,9 @@ fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>, tick: u64) -> 
                 }
                 KeyCode::Down => {
                     app.move_down();
+                }
+                KeyCode::Up => {
+                    app.rotate();
                 }
                 _ => {}
             },

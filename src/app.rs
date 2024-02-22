@@ -212,4 +212,60 @@ impl App {
         self.mino = mino;
         return true;
     }
+    pub fn width(&self) -> u16 {
+        return self.width;
+    }
+    pub fn height(&self) -> u16 {
+        return self.height;
+    }
+    pub fn move_right(&mut self) {
+        self.move_mino(&Point { y: 0, x: 1 });
+    }
+    pub fn move_left(&mut self) {
+        self.move_mino(&Point { y: 0, x: -1 });
+    }
+    pub fn move_down(&mut self) {
+        self.move_mino(&Point { y: 1, x: 0 });
+    }
+    pub fn rotate(&mut self) {
+        let mut mino = self.mino.clone();
+        let position = self.position.clone();
+        self.render(&mut mino, &position, 0); // Borrow `self.mino` as mutable
+        mino.rotate_left();
+        if self.is_conflict(&position, &mino) {
+            mino.rotate_right();
+        }
+        self.mino = mino;
+        self.move_down();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rotate_round() {
+        let mut mino = Mino::create(TETROMINOS::STRAIGHT);
+        let original = mino.clone();
+        mino.rotate_left();
+        assert_eq!(mino.block.points, [[0, 0], [-1, 0], [-2, 0], [-3, 0]]);
+        mino.rotate_left();
+        assert_eq!(mino.block.points, [[0, 0], [0, -1], [0, -2], [0, -3]]);
+        mino.rotate_left();
+        assert_eq!(mino.block.points, [[0, 0], [1, 0], [2, 0], [3, 0]]);
+        mino.rotate_left();
+        assert_eq!(mino.block.points, original.block.points);
+    }
+    #[test]
+    fn rotate_equivalence() {
+        let mut mino = Mino::create(TETROMINOS::STRAIGHT);
+        let original = mino.clone();
+        mino.rotate_left();
+        mino.rotate_right();
+        assert_eq!(mino.block.points, original.block.points);
+        mino.rotate_right();
+        mino.rotate_left();
+        assert_eq!(mino.block.points, original.block.points);
+    }
 }
