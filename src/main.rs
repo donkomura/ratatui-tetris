@@ -2,8 +2,8 @@ mod app;
 mod event;
 mod ui;
 
-use anyhow::Result;
 use app::App;
+use color_eyre::eyre::Result;
 use crossterm::{
     event::{KeyCode, KeyModifiers},
     execute,
@@ -26,6 +26,7 @@ fn reset(mut stream: Box<dyn Write>) -> Result<()> {
 }
 
 fn main() -> Result<()> {
+    color_eyre::install()?;
     enable_raw_mode()?;
 
     let mut stdout = io::stdout();
