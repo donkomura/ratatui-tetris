@@ -1,6 +1,6 @@
 use rand::Rng;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum TETROMINOS {
     // all mino consists of 4 blocks
     STRAIGHT,
@@ -13,48 +13,47 @@ pub enum TETROMINOS {
 #[derive(Clone)]
 pub struct Shape {
     pub kind: TETROMINOS,
-    pub shape: [[i32; 2]; 4], // [y, x]
+    pub points: [[i32; 2]; 4], // [y, x]
 }
 
 impl Shape {
     fn straight() -> Self {
         Shape {
             kind: TETROMINOS::STRAIGHT,
-            shape: [[0, 0], [0, 1], [0, 2], [0, 3]],
+            points: [[0, 0], [0, 1], [0, 2], [0, 3]],
         }
     }
     fn square() -> Self {
         Shape {
             kind: TETROMINOS::SQUARE,
-            shape: [[0, 0], [0, 1], [1, 0], [1, 1]],
+            points: [[0, 0], [0, 1], [1, 0], [1, 1]],
         }
     }
     fn t() -> Self {
         Shape {
             kind: TETROMINOS::T,
-            shape: [[0, 0], [0, 1], [0, 2], [1, 1]],
+            points: [[0, 0], [0, 1], [0, 2], [1, 1]],
         }
     }
     fn l() -> Self {
         Shape {
             kind: TETROMINOS::L,
-            shape: [[0, 0], [0, 1], [0, 2], [1, 2]],
+            points: [[0, 0], [0, 1], [0, 2], [1, 2]],
         }
     }
     fn s() -> Self {
         Shape {
             kind: TETROMINOS::S,
-            shape: [[0, 0], [0, 1], [1, 1], [1, 2]],
+            points: [[0, 0], [0, 1], [1, 1], [1, 2]],
         }
     }
-    pub fn new() -> Self {
-        let mut rng = rand::thread_rng();
-        match rng.gen::<u8>() % 5 {
-            0 => Shape::straight(),
-            1 => Shape::square(),
-            2 => Shape::t(),
-            3 => Shape::l(),
-            _ => Shape::s(),
+    pub fn new(kind: TETROMINOS) -> Self {
+        match kind {
+            TETROMINOS::STRAIGHT => Shape::straight(),
+            TETROMINOS::SQUARE => Shape::square(),
+            TETROMINOS::T => Shape::t(),
+            TETROMINOS::L => Shape::l(),
+            TETROMINOS::S => Shape::s(),
         }
     }
 }
@@ -67,10 +66,43 @@ pub struct Mino {
 
 impl Mino {
     pub fn new() -> Self {
+        const TETRAMINOS_LEN: u32 = 5;
+        let kind = match rand::thread_rng().gen_range(0..TETRAMINOS_LEN) {
+            0 => TETROMINOS::STRAIGHT,
+            1 => TETROMINOS::SQUARE,
+            2 => TETROMINOS::T,
+            3 => TETROMINOS::L,
+            4 => TETROMINOS::S,
+            _ => TETROMINOS::STRAIGHT,
+        };
         Mino {
             is_falling: false,
-            block: Shape::new(),
+            block: Shape::new(kind),
         }
+    }
+    pub fn rotate_left(&mut self) {
+        let block = self.block.clone();
+        if block.kind == TETROMINOS::SQUARE {
+            return;
+        }
+        let mut new_points = [[0; 2]; 4];
+        for i in 0..block.points.len() {
+            let [y, x] = block.points[i];
+            new_points[i] = [-x, y];
+        }
+        self.block.points = new_points;
+    }
+    pub fn rotate_right(&mut self) {
+        let block = self.block.clone();
+        if block.kind == TETROMINOS::SQUARE {
+            return;
+        }
+        let mut new_points = [[0; 2]; 4];
+        for i in 0..block.points.len() {
+            let [y, x] = block.points[i];
+            new_points[i] = [x, -y];
+        }
+        self.block.points = new_points;
     }
 }
 
@@ -112,9 +144,9 @@ impl App {
         return false;
     }
     fn is_conflict(&self, position: &Point, mino: &Mino) -> bool {
-        let shape = &mino.block.shape;
-        for i in 0..shape.len() {
-            let [y, x] = shape[i];
+        let points = &mino.block.points;
+        for i in 0..points.len() {
+            let [y, x] = points[i];
             let cy = y + position.y;
             let cx = x + position.x;
             if self.is_out_of_range(cy, cx) {
@@ -127,27 +159,12 @@ impl App {
         return false;
     }
     fn render(&mut self, mino: &Mino, base: &Point, value: i32) {
-        for i in 0..mino.block.shape.len() {
-            let [y, x] = mino.block.shape[i];
+        for i in 0..mino.block.points.len() {
+            let [y, x] = mino.block.points[i];
             let ny = y + base.y;
             let nx = x + base.x;
             self.board[ny as usize][nx as usize] = value;
         }
-    }
-    pub fn width(&self) -> u16 {
-        return self.width;
-    }
-    pub fn height(&self) -> u16 {
-        return self.height;
-    }
-    pub fn move_right(&mut self) {
-        self.move_mino(&Point { y: 0, x: 1 });
-    }
-    pub fn move_left(&mut self) {
-        self.move_mino(&Point { y: 0, x: -1 });
-    }
-    pub fn move_down(&mut self) {
-        self.move_mino(&Point { y: 1, x: 0 });
     }
     fn move_mino(&mut self, diff: &Point) -> bool {
         let np = Point {
@@ -187,5 +204,73 @@ impl App {
         self.render(&mino, &self.position.clone(), 1);
         self.mino = mino;
         return true;
+    }
+    pub fn width(&self) -> u16 {
+        return self.width;
+    }
+    pub fn height(&self) -> u16 {
+        return self.height;
+    }
+    pub fn move_right(&mut self) {
+        self.move_mino(&Point { y: 0, x: 1 });
+    }
+    pub fn move_left(&mut self) {
+        self.move_mino(&Point { y: 0, x: -1 });
+    }
+    pub fn move_down(&mut self) {
+        self.move_mino(&Point { y: 1, x: 0 });
+    }
+    pub fn rotate(&mut self) {
+        let mut mino = self.mino.clone();
+        let position = self.position.clone();
+        self.render(&mut mino, &position, 0); // Borrow `self.mino` as mutable
+        mino.rotate_right();
+        if self.is_conflict(&position, &mino) {
+            mino.rotate_left();
+        }
+        self.mino = mino;
+        self.move_down();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    trait FactoryForTest {
+        fn create(kind: TETROMINOS) -> Self;
+    }
+    impl FactoryForTest for Mino {
+        fn create(kind: TETROMINOS) -> Self {
+            Mino {
+                is_falling: false,
+                block: Shape::new(kind),
+            }
+        }
+    }
+
+    #[test]
+    fn rotate_round() {
+        let mut mino = Mino::create(TETROMINOS::STRAIGHT);
+        let original = mino.clone();
+        mino.rotate_left();
+        assert_eq!(mino.block.points, [[0, 0], [-1, 0], [-2, 0], [-3, 0]]);
+        mino.rotate_left();
+        assert_eq!(mino.block.points, [[0, 0], [0, -1], [0, -2], [0, -3]]);
+        mino.rotate_left();
+        assert_eq!(mino.block.points, [[0, 0], [1, 0], [2, 0], [3, 0]]);
+        mino.rotate_left();
+        assert_eq!(mino.block.points, original.block.points);
+    }
+    #[test]
+    fn rotate_equivalence() {
+        let mut mino = Mino::create(TETROMINOS::STRAIGHT);
+        let original = mino.clone();
+        mino.rotate_left();
+        mino.rotate_right();
+        assert_eq!(mino.block.points, original.block.points);
+        mino.rotate_right();
+        mino.rotate_left();
+        assert_eq!(mino.block.points, original.block.points);
     }
 }
