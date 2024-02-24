@@ -14,38 +14,22 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     terminal::Terminal,
 };
-use std::{
-    io::{self, Write},
-    panic,
-};
-
-fn reset(mut stream: Box<dyn Write>) -> Result<()> {
-    disable_raw_mode()?;
-    execute!(stream, LeaveAlternateScreen)?;
-    Ok(())
-}
+use std::io;
+use tui::Tui;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
     enable_raw_mode()?;
 
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-
-    // panic hook
-    let panic_hook = panic::take_hook();
-    panic::set_hook(Box::new(move |panic| {
-        reset(Box::new(io::stderr())).expect("failed to reset the terminal");
-        panic_hook(panic);
-    }));
+    let events = EventHandler::new(250);
+    let mut tui = Tui::new(terminal, events);
 
     // create and run app
     let mut app = App::new();
     let res = run_app(&mut app, &mut terminal, 250);
-    reset(Box::new(io::stdout()))?; // Use the new instance of stdout
-    terminal.show_cursor()?;
 
     if let Ok(success) = res {
         if success {
@@ -55,6 +39,7 @@ fn main() -> Result<()> {
         println!("Error: {}", err);
     }
 
+    tui.exit()?;
     Ok(())
 }
 
