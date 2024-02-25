@@ -1,6 +1,6 @@
 use rand::Rng;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum TETROMINOS {
     // all mino consists of 4 blocks
     STRAIGHT,
@@ -10,7 +10,7 @@ pub enum TETROMINOS {
     S,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Shape {
     pub kind: TETROMINOS,
     pub points: [[i32; 2]; 4], // [y, x]
@@ -58,7 +58,7 @@ impl Shape {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Mino {
     pub is_falling: bool,
     pub block: Shape, // shape of the tetromino
@@ -106,17 +106,18 @@ impl Mino {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Point {
     pub y: i32,
     pub x: i32,
 }
 
+#[derive(Debug)]
 pub struct App {
     width: u16,
     height: u16,
     pub score: u64,
-    pub should_quit: bool,
+    pub running: bool,
     pub mino: Mino,
     pub position: Point,        // left corner of the tetromino
     pub board: [[i32; 10]; 20], // 20x10 board
@@ -125,17 +126,83 @@ pub struct App {
 const BOARD_WIDTH: u16 = 10;
 const BOARD_HEIGHT: u16 = 20;
 
-impl App {
-    pub fn new() -> App {
+impl Default for App {
+    fn default() -> Self {
         App {
             width: BOARD_WIDTH,
             height: BOARD_HEIGHT,
             score: 0,
-            should_quit: false,
+            running: true,
             mino: Mino::new(),
             position: Point { y: 0, x: 0 },
             board: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
         }
+    }
+}
+
+impl App {
+    pub fn new() -> App {
+        Self::default()
+    }
+    pub fn quiet(&mut self) {
+        self.running = false;
+    }
+    pub fn reset_position(&mut self) {
+        self.position = Point { y: 0, x: 0 };
+    }
+    pub fn check_state(&mut self) {
+        if !self.fall() {
+            self.mino.is_falling = false;
+        }
+        if !self.mino.is_falling {
+            if !self.spawn() {
+                self.quiet();
+            }
+            self.mino.is_falling = true;
+        }
+    }
+    pub fn fall(&mut self) -> bool {
+        if !self.mino.is_falling {
+            return false;
+        }
+        return self.move_mino(&Point { y: 1, x: 0 });
+    }
+    // create new block at the top of the board
+    pub fn spawn(&mut self) -> bool {
+        let mino = Mino::new();
+        self.reset_position();
+        if self.is_conflict(&self.position, &mino) {
+            return false;
+        }
+        self.render(&mino, &self.position.clone(), 1);
+        self.mino = mino;
+        return true;
+    }
+    pub fn width(&self) -> u16 {
+        return self.width;
+    }
+    pub fn height(&self) -> u16 {
+        return self.height;
+    }
+    pub fn move_right(&mut self) {
+        self.move_mino(&Point { y: 0, x: 1 });
+    }
+    pub fn move_left(&mut self) {
+        self.move_mino(&Point { y: 0, x: -1 });
+    }
+    pub fn move_down(&mut self) {
+        self.move_mino(&Point { y: 1, x: 0 });
+    }
+    pub fn rotate(&mut self) {
+        let mut mino = self.mino.clone();
+        let position = self.position.clone();
+        self.render(&mut mino, &position, 0); // Borrow `self.mino` as mutable
+        mino.rotate_right();
+        if self.is_conflict(&position, &mino) {
+            mino.rotate_left();
+        }
+        self.mino = mino;
+        self.move_down();
     }
     fn is_out_of_range(&self, py: i32, px: i32) -> bool {
         if py < 0 || py >= 20 || px < 0 || px >= 10 {
@@ -184,52 +251,6 @@ impl App {
         self.render(&mino, &np, 1);
         self.position = np;
         return true;
-    }
-    pub fn reset_position(&mut self) {
-        self.position = Point { y: 0, x: 0 };
-    }
-    pub fn fall(&mut self) -> bool {
-        if !self.mino.is_falling {
-            return false;
-        }
-        return self.move_mino(&Point { y: 1, x: 0 });
-    }
-    // create new block at the top of the board
-    pub fn spawn(&mut self) -> bool {
-        let mino = Mino::new();
-        self.reset_position();
-        if self.is_conflict(&self.position, &mino) {
-            return false;
-        }
-        self.render(&mino, &self.position.clone(), 1);
-        self.mino = mino;
-        return true;
-    }
-    pub fn width(&self) -> u16 {
-        return self.width;
-    }
-    pub fn height(&self) -> u16 {
-        return self.height;
-    }
-    pub fn move_right(&mut self) {
-        self.move_mino(&Point { y: 0, x: 1 });
-    }
-    pub fn move_left(&mut self) {
-        self.move_mino(&Point { y: 0, x: -1 });
-    }
-    pub fn move_down(&mut self) {
-        self.move_mino(&Point { y: 1, x: 0 });
-    }
-    pub fn rotate(&mut self) {
-        let mut mino = self.mino.clone();
-        let position = self.position.clone();
-        self.render(&mut mino, &position, 0); // Borrow `self.mino` as mutable
-        mino.rotate_right();
-        if self.is_conflict(&position, &mino) {
-            mino.rotate_left();
-        }
-        self.mino = mino;
-        self.move_down();
     }
 }
 
