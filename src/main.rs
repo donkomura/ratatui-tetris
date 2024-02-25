@@ -16,17 +16,7 @@ fn main() -> Result<()> {
     let mut app = App::new();
     while app.running {
         tui.draw(&mut app)?;
-        // 落下
-        if !app.fall() {
-            app.mino.is_falling = false;
-        }
-        if !app.mino.is_falling {
-            // 新規作成
-            if !app.spawn() {
-                app.quiet();
-            }
-            app.mino.is_falling = true;
-        }
+        app.check_state();
 
         match tui.events.next()? {
             event::Event::Tick => {}

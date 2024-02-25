@@ -150,6 +150,17 @@ impl App {
     pub fn reset_position(&mut self) {
         self.position = Point { y: 0, x: 0 };
     }
+    pub fn check_state(&mut self) {
+        if !self.fall() {
+            self.mino.is_falling = false;
+        }
+        if !self.mino.is_falling {
+            if !self.spawn() {
+                self.quiet();
+            }
+            self.mino.is_falling = true;
+        }
+    }
     pub fn fall(&mut self) -> bool {
         if !self.mino.is_falling {
             return false;
