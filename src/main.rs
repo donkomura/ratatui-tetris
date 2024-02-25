@@ -1,8 +1,7 @@
 use color_eyre::eyre::Result;
-use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::{backend::CrosstermBackend, terminal::Terminal};
 use ratatui_tetris::event::{self, EventHandler};
-use ratatui_tetris::{app::App, tui::Tui};
+use ratatui_tetris::{app::App, handler::handle_key_events, tui::Tui};
 use std::io;
 
 fn main() -> Result<()> {
@@ -31,29 +30,7 @@ fn main() -> Result<()> {
 
         match tui.events.next()? {
             event::Event::Tick => {}
-            event::Event::Key(key_event) => match key_event.code {
-                KeyCode::Char('q') | KeyCode::Esc => {
-                    app.quiet();
-                }
-                KeyCode::Char('c') | KeyCode::Char('C') => {
-                    if key_event.modifiers == KeyModifiers::CONTROL {
-                        app.quiet();
-                    }
-                }
-                KeyCode::Right => {
-                    app.move_right();
-                }
-                KeyCode::Left => {
-                    app.move_left();
-                }
-                KeyCode::Down => {
-                    app.move_down();
-                }
-                KeyCode::Up => {
-                    app.rotate();
-                }
-                _ => {}
-            },
+            event::Event::Key(key_event) => handle_key_events(key_event, &mut app),
             event::Event::Mouse(_) => {}
             event::Event::Resize(_, _) => {}
         };
