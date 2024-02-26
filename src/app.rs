@@ -160,6 +160,7 @@ impl App {
             }
             self.mino.is_falling = true;
         }
+        self.update_score();
     }
     pub fn fall(&mut self) -> bool {
         if !self.mino.is_falling {
@@ -203,6 +204,22 @@ impl App {
         }
         self.mino = mino;
         self.move_down();
+    }
+    pub fn update_score(&mut self) {
+        let mut score = 0;
+        for i in 0..self.height as usize {
+            let mut row_filed = true;
+            for j in 0..self.width as usize {
+                if self.board[i as usize][j as usize] == 0 {
+                    row_filed = false;
+                    break;
+                }
+            }
+            if row_filed {
+                score += 1;
+            }
+        }
+        self.score = score;
     }
     fn is_out_of_range(&self, py: i32, px: i32) -> bool {
         if py < 0 || py >= 20 || px < 0 || px >= 10 {
@@ -293,5 +310,17 @@ mod tests {
         mino.rotate_right();
         mino.rotate_left();
         assert_eq!(mino.block.points, original.block.points);
+    }
+    #[test]
+    fn update_score() {
+        let mut app = App::new();
+        let max_height = 5;
+        for i in 0..max_height as usize {
+            for j in 0..app.width as usize {
+                app.board[i][j] = 1;
+            }
+        }
+        app.update_score();
+        assert_eq!(app.score, max_height);
     }
 }
