@@ -2,13 +2,14 @@ use crate::app::App;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    symbols,
+    symbols::{self, Marker},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{
+        canvas::{Canvas, Rectangle},
+        Block, Borders, Paragraph,
+    },
     Frame,
 };
-
-const CELL: char = '□';
 
 fn render_header(f: &mut Frame, app: &App, chunk: Rect) {
     let header_area = Layout::default()
@@ -43,20 +44,28 @@ fn render_body(f: &mut Frame, app: &App, chunk: Rect) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Length(app.width() + 2)])
         .split(chunk);
-    let mut lines: Vec<Line> = Vec::new();
-    for (_, row) in app.board.iter().enumerate() {
-        let mut rs = String::new();
-        for (_, cell) in row.iter().enumerate() {
-            if *cell == 0 {
-                rs.push(' ');
-            } else {
-                rs.push(CELL);
+    let block = Canvas::default()
+        .block(Block::default().borders(Borders::ALL))
+        .marker(Marker::HalfBlock)
+        .y_bounds([0.0, app.height() as f64])
+        .x_bounds([0.0, app.width() as f64])
+        .paint(|ctx| {
+            let height = app.height() as usize;
+            for (i, row) in app.board.iter().enumerate() {
+                for (j, cell) in row.iter().enumerate() {
+                    if *cell == 0 {
+                        continue;
+                    }
+                    ctx.draw(&Rectangle {
+                        y: height.saturating_sub(i + 1) as f64,
+                        x: (j + 1) as f64,
+                        width: 0.0,
+                        height: 0.0,
+                        color: Color::Red,
+                    });
+                }
             }
-        }
-        lines.push(Line::from(rs));
-    }
-    let text = Text::from(lines);
-    let block = Paragraph::new(text).block(Block::bordered());
+        });
     f.render_widget(block, body_area[0]);
 }
 
