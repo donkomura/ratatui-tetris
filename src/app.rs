@@ -161,6 +161,7 @@ impl App {
             self.mino.is_falling = true;
         }
         self.update_score();
+        self.delete_filled_rows();
     }
     pub fn fall(&mut self) -> bool {
         if !self.mino.is_falling {
@@ -241,6 +242,33 @@ impl App {
             }
         }
         return false;
+    }
+    fn delete_filled_rows(&mut self) {
+        let mut filled = vec![];
+        for i in 0..self.height as usize {
+            let mut is_filled = true;
+            for j in 0..self.width as usize {
+                if self.board[i][j] == 0 {
+                    is_filled = false;
+                    break;
+                }
+            }
+            if is_filled {
+                filled.push(i);
+            }
+        }
+        for i in filled.iter().rev() {
+            for j in 0..self.width as usize {
+                self.board[*i][j] = 0;
+            }
+            // bump down the rows above the filled(deleted) row
+            for k in (0..*i).rev() {
+                for j in 0..self.width as usize {
+                    self.board[k + 1][j] = self.board[k][j];
+                }
+            }
+            self.move_mino(&Point { y: -1, x: 0 });
+        }
     }
     fn render(&mut self, mino: &Mino, base: &Point, value: i32) {
         for i in 0..mino.block.points.len() {
